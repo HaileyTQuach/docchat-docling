@@ -1,12 +1,15 @@
-from langchain_openai import ChatOpenAI
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import StrOutputParser
+import json  # Import for JSON serialization
+from ibm_watsonx_ai.foundation_models import ModelInference
+from ibm_watsonx_ai import Credentials, APIClient
 from typing import Dict, List
 from langchain.schema import Document
-from config.settings import settings
-import logging
 
-logger = logging.getLogger(__name__)
+credentials = Credentials(
+                   url = "https://us-south.ml.cloud.ibm.com",
+                  )
+client = APIClient(credentials)
 
 class VerificationAgent:
-    # TODO
+    def __init__(self):
+        # TODO
+        pass
