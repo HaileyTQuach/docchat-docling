@@ -11,4 +11,6 @@ from config.settings import settings
 from utils.logging import logger
 
 class DocumentProcessor:
-    # TODO
+    def __init__(self):
+        # TODO
+        pass

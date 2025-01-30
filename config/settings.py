@@ -1,10 +1,7 @@
 from pydantic_settings import BaseSettings
 from .constants import MAX_FILE_SIZE, MAX_TOTAL_SIZE, ALLOWED_TYPES
-import os
 
 class Settings(BaseSettings):
-    # Required settings
-    OPENAI_API_KEY: str
 
     # Optional settings with defaults
     MAX_FILE_SIZE: int = MAX_FILE_SIZE
@@ -16,7 +13,7 @@ class Settings(BaseSettings):
     CHROMA_COLLECTION_NAME: str = "documents"
 
     # Retrieval settings
-    VECTOR_SEARCH_K: int = 5
+    VECTOR_SEARCH_K: int = 10
     HYBRID_RETRIEVER_WEIGHTS: list = [0.4, 0.6]
 
     # Logging settings
