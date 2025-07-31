@@ -111,7 +111,7 @@ class AgentWorkflow:
     
     def _research_step(self, state: AgentState) -> Dict:
         print(f"[DEBUG] Entered _research_step with question='{state['question']}'")
-        result = self.researcher.generate(state["question"], state["documents"])
+        result = self.researcher.generate(state["question"], state["documents"], state["verification_report"])
         print("[DEBUG] Researcher returned draft answer.")
         return {"draft_answer": result["draft_answer"]}
     
