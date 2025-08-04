@@ -111,15 +111,17 @@ class AgentWorkflow:
     
     def _research_step(self, state: AgentState) -> Dict:
         print(f"[DEBUG] Entered _research_step with question='{state['question']}'")
-        result = self.researcher.generate(state["question"], state["documents"])
+        result = self.researcher.run(state["question"], state["documents"])
         print("[DEBUG] Researcher returned draft answer.")
-        return {"draft_answer": result["draft_answer"]}
+        return {"draft_answer": result["answer"]}
     
     def _verification_step(self, state: AgentState) -> Dict:
         print("[DEBUG] Entered _verification_step. Verifying the draft answer...")
-        result = self.verifier.check(state["draft_answer"], state["documents"])
+        context_str = "\n\n".join([doc.page_content for doc in state["documents"]])
+        research_result = {"answer": state["draft_answer"], "context": context_str}
+        result = self.verifier.run(research_result)
         print("[DEBUG] VerificationAgent returned a verification report.")
-        return {"verification_report": result["verification_report"]}
+        return {"verification_report": result["verification_result"]}
     
     def _decide_next_step(self, state: AgentState) -> str:
         verification_report = state["verification_report"]

@@ -1,25 +1,18 @@
-from ibm_watsonx_ai.foundation_models import ModelInference
-from ibm_watsonx_ai import Credentials, APIClient
+
 from config.settings import settings
 import re
 import logging
+import google.generativeai as genai
 
 logger = logging.getLogger(__name__)
 
-credentials = Credentials(
-                   url = "https://us-south.ml.cloud.ibm.com",
-                  )
-client = APIClient(credentials)
+
+genai.configure(api_key=settings.GOOGLE_API_KEY)
 
 class RelevanceChecker:
     def __init__(self):
-        # Initialize the WatsonX ModelInference
-        self.model = ModelInference(
-            model_id="ibm/granite-3-8b-instruct",
-            credentials=credentials,
-            project_id="skills-network",
-            params={"temperature": 0, "max_tokens": 10},
-        )
+        # Initialize the Gemini Model
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
 
     def check(self, question: str, retriever, k=3) -> str:
         """
@@ -65,35 +58,17 @@ class RelevanceChecker:
 
         # Call the LLM
         try:
-            response = self.model.chat(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt  # Changed from list to string
-                    }
-                ]
-            )
+            response = self.model.generate_content(prompt)
+            classification = response.text.strip().upper()
+
+            # Validate the classification
+            if classification in ["CAN_ANSWER", "PARTIAL", "NO_MATCH"]:
+                logger.debug(f"Relevance classification: {classification}")
+                return classification
+            else:
+                logger.warning(f"LLM returned an invalid classification: '{classification}'. Defaulting to NO_MATCH.")
+                return "NO_MATCH"
+
         except Exception as e:
-            logger.error(f"Error during model inference: {e}")
+            logger.error(f"An error occurred during LLM call: {e}")
             return "NO_MATCH"
-
-        # Extract the content from the response
-        try:
-            llm_response = response['choices'][0]['message']['content'].strip().upper()
-            logger.debug(f"LLM response: {llm_response}")
-        except (IndexError, KeyError) as e:
-            logger.error(f"Unexpected response structure: {e}")
-            return "NO_MATCH"
-
-        print(f"Checker response: {llm_response}")
-
-        # Validate the response
-        valid_labels = {"CAN_ANSWER", "PARTIAL", "NO_MATCH"}
-        if llm_response not in valid_labels:
-            logger.debug("LLM did not respond with a valid label. Forcing 'NO_MATCH'.")
-            classification = "NO_MATCH"
-        else:
-            logger.debug(f"Classification recognized as '{llm_response}'.")
-            classification = llm_response
-
-        return classification

@@ -1,33 +1,24 @@
-from ibm_watsonx_ai.foundation_models import ModelInference
-from ibm_watsonx_ai import Credentials, APIClient
+import google.generativeai as genai
 from typing import Dict, List
 from langchain.schema import Document
 from config.settings import settings
 import json
+import logging
 
-credentials = Credentials(
-                   url = "https://us-south.ml.cloud.ibm.com",
-                  )
-client = APIClient(credentials)
+logger = logging.getLogger(__name__)
+
+genai.configure(api_key=settings.GOOGLE_API_KEY)
 
 
 class ResearchAgent:
     def __init__(self):
         """
-        Initialize the research agent with the IBM WatsonX ModelInference.
+        Initialize the research agent with the Google Gemini Model.
         """
-        # Initialize the WatsonX ModelInference
-        print("Initializing ResearchAgent with IBM WatsonX ModelInference...")
-        self.model = ModelInference(
-            model_id="meta-llama/llama-3-2-90b-vision-instruct", 
-            credentials=credentials,
-            project_id="skills-network",
-            params={
-                "max_tokens": 300,            # Adjust based on desired response length
-                "temperature": 0.3,           # Controls randomness; lower values make output more deterministic
-            }
-        )
-        print("ModelInference initialized successfully.")
+        # Initialize the Gemini Model
+        print("Initializing ResearchAgent with Google Gemini Model...")
+        self.model = genai.GenerativeModel('gemini-2.5-pro')
+        print("Gemini Model initialized successfully.")
 
     def sanitize_response(self, response_text: str) -> str:
         """
@@ -48,57 +39,36 @@ class ResearchAgent:
         - Return as much information as you can get from the context.
         
         **Question:** {question}
+        
         **Context:**
         {context}
-
-        **Provide your answer below:**
         """
         return prompt
 
-    def generate(self, question: str, documents: List[Document]) -> Dict:
+    def run(self, question: str, context_docs: List[Document]) -> Dict:
         """
-        Generate an initial answer using the provided documents.
+        Generate a research-based answer using the provided context documents.
         """
-        print(f"ResearchAgent.generate called with question='{question}' and {len(documents)} documents.")
-
-        # Combine the top document contents into one string
-        context = "\n\n".join([doc.page_content for doc in documents])
-        print(f"Combined context length: {len(context)} characters.")
-
-        # Create a prompt for the LLM
-        prompt = self.generate_prompt(question, context)
-        print("Prompt created for the LLM.")
-
-        # Call the LLM to generate the answer
+        # Combine document contents into a single context string
+        context_str = "\n\n".join([doc.page_content for doc in context_docs])
+        
+        # Generate the prompt
+        prompt = self.generate_prompt(question, context_str)
+        
+        # Call the LLM
         try:
-            print("Sending prompt to the model...")
-            response = self.model.chat(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt  # Ensure content is a string
-                    }
-                ]
-            )
-            print("LLM response received.")
+            response = self.model.generate_content(prompt)
+            sanitized_response = self.sanitize_response(response.text)
+            
+            return {
+                "answer": sanitized_response,
+                "context": context_str,
+                "source_documents": [doc.metadata.get('source', 'N/A') for doc in context_docs]
+            }
         except Exception as e:
-            print(f"Error during model inference: {e}")
-            raise RuntimeError("Failed to generate answer due to a model error.") from e
-
-        # Extract and process the LLM's response
-        try:
-            llm_response = response['choices'][0]['message']['content'].strip()
-            print(f"Raw LLM response:\n{llm_response}")
-        except (IndexError, KeyError) as e:
-            print(f"Unexpected response structure: {e}")
-            llm_response = "I cannot answer this question based on the provided documents."
-
-        # Sanitize the response
-        draft_answer = self.sanitize_response(llm_response) if llm_response else "I cannot answer this question based on the provided documents."
-
-        print(f"Generated answer: {draft_answer}")
-
-        return {
-            "draft_answer": draft_answer,
-            "context_used": context
-        }
+            logger.error(f"An error occurred during LLM call in ResearchAgent: {e}")
+            return {
+                "answer": "Error: Could not generate an answer.",
+                "context": context_str,
+                "source_documents": [doc.metadata.get('source', 'N/A') for doc in context_docs]
+            }
