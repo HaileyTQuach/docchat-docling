@@ -1,5 +1,5 @@
 from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.retrievers import BM25Retriever
 from langchain.retrievers import EnsembleRetriever
 from config.settings import settings
@@ -10,7 +10,10 @@ logger = logging.getLogger(__name__)
 class RetrieverBuilder:
     def __init__(self):
         """Initialize the retriever builder with embeddings."""
-        self.embeddings = OpenAIEmbeddings(api_key=settings.OPENAI_API_KEY)
+        self.embeddings = GoogleGenerativeAIEmbeddings(
+            model="models/embedding-001",
+            google_api_key=settings.GOOGLE_API_KEY
+        )
         
     def build_hybrid_retriever(self, docs):
         """Build a hybrid retriever using BM25 and vector-based retrieval."""

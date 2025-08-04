@@ -4,8 +4,8 @@ import os
 
 class Settings(BaseSettings):
     # Required settings
-    OPENAI_API_KEY: str
-
+    OPENAI_API_KEY: str = "your-openai-api-key"
+    GOOGLE_API_KEY: str = "your-google-api-key"
     # Optional settings with defaults
     MAX_FILE_SIZE: int = MAX_FILE_SIZE
     MAX_TOTAL_SIZE: int = MAX_TOTAL_SIZE
