@@ -187,7 +187,7 @@ def main():
             outputs=[answer_output, verification_output, session_state]
         )
 
-    demo.launch(server_port=7860, server_name="0.0.0.0")
+    demo.launch(server_name="127.0.0.1", server_port=5000, share=True)
 
 def _get_file_hashes(uploaded_files: List) -> frozenset:
     """Generate SHA-256 hashes for uploaded files."""

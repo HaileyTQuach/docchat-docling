@@ -4,5 +4,4 @@ __pycache__/
 chroma_db/
 venv/
 app.log
-document_cache/
-.DS_Store.DS_Store
+.DS_Store
