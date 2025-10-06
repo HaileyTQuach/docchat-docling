@@ -17,7 +17,7 @@ class VerificationAgent:
         # Initialize the WatsonX ModelInference
         print("Initializing VerificationAgent with IBM WatsonX ModelInference...")
         self.model = ModelInference(
-            model_id="ibm/granite-3-8b-instruct", 
+            model_id="ibm/granite-4-h-small", 
             credentials=credentials,
             project_id="skills-network",
             params={
